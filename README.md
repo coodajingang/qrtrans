@@ -29,8 +29,8 @@ pillow>=8.0.0
 ## 安装说明
 
 1. 克隆仓库：
-git clone https://github.com/yourusername/qr-data-transfer.git
-cd qr-data-transfer
+git clone https://github.com/coodajingang/QrTransfer.git
+cd QrTransfer
 
 2. 安装依赖：
 pip install -r requirements.txt
@@ -90,7 +90,7 @@ MIT License
 
 ## 作者
 
-[Your Name]
+coodajingang
 
 ## 更新日志
 
