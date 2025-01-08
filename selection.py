@@ -1,0 +1,152 @@
+from PyQt6.QtWidgets import QMainWindow, QFileDialog, QLineEdit, QDialog, QPushButton, QSpinBox, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout, QMessageBox
+from PyQt6.QtCore import QTimer, QRect, QPoint, Qt
+from data_transfer import send_file
+from PyQt6.QtGui import QPixmap, QAction, QIcon, QPainter, QPen, QCursor,QImage
+import cv2
+import numpy as np
+import pyautogui
+import time
+from PyQt6.QtWidgets import QWidget, QApplication
+from PyQt6.QtCore import Qt, QPoint, QRect, QSize
+from PyQt6.QtGui import QPainter, QPen, QColor
+
+
+class SelectionArea(QWidget):
+    def __init__(self, parent=None, area_idx=None):
+        super().__init__(parent)
+        self.area_idx = area_idx
+        # 设置窗口标志
+        #self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |  # 无边框
+            Qt.WindowType.WindowStaysOnTopHint |  # 窗口置顶
+            Qt.WindowType.Tool |                  # 工具窗口
+            Qt.WindowType.BypassWindowManagerHint # 绕过窗口管理器
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # 初始化变量
+        self.start_point = QPoint()
+        self.end_point = QPoint()
+        self.is_drawing = False
+        
+        # 获取当前屏幕
+        current_screen = QApplication.screenAt(QCursor.pos())
+        if current_screen is None:
+            current_screen = QApplication.primaryScreen()
+            
+        # 设置窗口大小为当前屏幕大小
+        self.screen_rect = current_screen.geometry()
+        self.setGeometry(self.screen_rect)
+        self.selection_rect = QRect()
+
+        # 设置鼠标追踪
+        self.setMouseTracking(True)
+        # 设置全屏
+        # screen = QApplication.primaryScreen().geometry()
+        # self.setGeometry(screen)
+        
+        # # 初始化整个屏幕的矩形
+        # self.screen_rect = self.geometry()
+        # self.selection_rect = QRect()
+
+        # 获取所有屏幕
+        # screens = QApplication.screens()
+        # # 计算所有屏幕组成的总区域
+        # total_rect = QRect()
+        # for screen in screens:
+        #     total_rect = total_rect.united(screen.geometry())
+            
+        # # 设置窗口大小为总屏幕区域
+        # self.setGeometry(total_rect)
+        
+        # # 初始化整个屏幕的矩形
+        # self.screen_rect = total_rect
+        # self.selection_rect = QRect()
+
+        # # 设置鼠标追踪
+        # self.setMouseTracking(True)
+        
+        # # 将窗口显示在最前面
+        # self.show()
+        # self.raise_()
+        # self.activateWindow()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        # 设置半透明的黑色背景
+        mask_color = QColor(0, 0, 0, 100)
+        painter.fillRect(self.screen_rect, mask_color)
+        
+        if self.is_drawing and not self.selection_rect.isEmpty():
+            # 清除选区内的遮罩
+            painter.eraseRect(self.selection_rect)
+            # 绘制选区边框
+            painter.setPen(QPen(Qt.GlobalColor.red, 2, Qt.PenStyle.SolidLine))
+            painter.drawRect(self.selection_rect)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.start_point = event.position().toPoint()
+            self.is_drawing = True
+            self.selection_rect = QRect()
+            self.update()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self.end_point = event.position().toPoint()
+            self.selection_rect = QRect(self.start_point, self.end_point).normalized()
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.end_point = event.position().toPoint()
+            self.selection_rect = QRect(self.start_point, self.end_point).normalized()
+            self.is_drawing = False
+            self.update()
+            # 获取选区坐标
+            print(f"Selection coordinates: {self.selection_rect.x()}, {self.selection_rect.y()}, "
+                  f"{self.selection_rect.width()}, {self.selection_rect.height()}")
+            self.parent().set_selection(self.selection_rect, self.area_idx)  # 将选择的区域传递给父窗口
+            self.close()
+
+    def keyPressEvent(self, event):
+        # 按ESC键退出
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+
+
+class SelectionArea2(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.start_point = QPoint()
+        self.end_point = QPoint()
+        self.rect = QRect()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setPen(QPen(Qt.GlobalColor.red, 2, Qt.PenStyle.SolidLine))
+        painter.drawRect(self.rect)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.start_point = event.position().toPoint()
+            self.end_point = self.start_point
+            self.rect = QRect(self.start_point, self.end_point)
+            self.update()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self.end_point = event.position().toPoint()
+            self.rect = QRect(self.start_point, self.end_point).normalized()
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.end_point = event.position().toPoint()
+            self.rect = QRect(self.start_point, self.end_point).normalized()
+            self.update()
+            self.parent().set_selection(self.rect)  # 将选择的区域传递给父窗口
+            self.close()  # 关闭选择区域窗口
