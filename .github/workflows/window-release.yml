@@ -29,7 +29,7 @@ jobs:
         Set-Location temp
         
         # 下载 zbar
-        Invoke-WebRequest -Uri "https://github.com/mchehab/zbar/releases/download/0.23.90/zbar-0.23.90-win64.zip" -OutFile "zbar.zip"
+        Invoke-WebRequest -Uri "https://linuxtv.org/downloads/zbar/binaries/zbar-0.23.91-win_x86_64-DShow.zip" -OutFile "zbar.zip"
         
         # 解压并列出内容
         Expand-Archive -Path zbar.zip -DestinationPath .
