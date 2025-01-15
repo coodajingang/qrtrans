@@ -21,32 +21,32 @@ jobs:
       with:
         python-version: '3.12'
         
-    - name: Download and setup zbar
-      shell: powershell
-      run: |
-        # 创建临时目录
-        New-Item -ItemType Directory -Force -Path .\temp
-        Set-Location temp
+    # - name: Download and setup zbar
+    #   shell: powershell
+    #   run: |
+    #     # 创建临时目录
+    #     New-Item -ItemType Directory -Force -Path .\temp
+    #     Set-Location temp
         
-        # 下载 zbar
-        Invoke-WebRequest -Uri "https://linuxtv.org/downloads/zbar/binaries/zbar-0.23.91-win_x86_64-DShow.zip" -OutFile "zbar.zip"
+    #     # 下载 zbar
+    #     Invoke-WebRequest -Uri "https://linuxtv.org/downloads/zbar/binaries/zbar-0.23.91-win_x86_64-DShow.zip" -OutFile "zbar.zip"
         
-        # 解压并列出内容
-        Expand-Archive -Path zbar.zip -DestinationPath .
+    #     # 解压并列出内容
+    #     Expand-Archive -Path zbar.zip -DestinationPath .
         
-        # 查找 DLL 文件
-        $dllPath = Get-ChildItem -Recurse -Filter "libzbar64-0.dll" | Select-Object -First 1 -ExpandProperty FullName
+    #     # 查找 DLL 文件
+    #     $dllPath = Get-ChildItem -Recurse -Filter "libzbar64-0.dll" | Select-Object -First 1 -ExpandProperty FullName
         
-        if ($dllPath) {
-            Write-Host "Found DLL at: $dllPath"
-            Copy-Item $dllPath -Destination ..\libzbar-0.dll
-        } else {
-            Write-Host "DLL not found. Listing directory content:"
-            Get-ChildItem -Recurse
-            exit 1
-        }
+    #     if ($dllPath) {
+    #         Write-Host "Found DLL at: $dllPath"
+    #         Copy-Item $dllPath -Destination ..\libzbar-0.dll
+    #     } else {
+    #         Write-Host "DLL not found. Listing directory content:"
+    #         Get-ChildItem -Recurse
+    #         exit 1
+    #     }
         
-        Set-Location ..
+    #     Set-Location ..
         
     - name: Install dependencies
       run: |
@@ -56,8 +56,8 @@ jobs:
         
     - name: Build EXE files
       run: |
-        pyinstaller --onefile sender.py --add-binary "libzbar-0.dll;."
-        pyinstaller --onefile receiver.py --add-binary "libzbar-0.dll;."
+        pyinstaller --onefile sender.py # --add-binary "libzbar-0.dll;."
+        pyinstaller --onefile receiver.py # --add-binary "libzbar-0.dll;."
         
     - name: Create Release
       id: create_release
