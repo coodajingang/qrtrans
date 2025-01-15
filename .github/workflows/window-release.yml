@@ -1,70 +1,59 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
-name: Python application
+name: Build and Release Python EXE
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-workflow_dispatch:
-
-permissions:
-  contents: read
-
+    tags:
+      - 'v*'
 
 jobs:
-  build-windows:
-    runs-on: windows-2019
+  build:
+    runs-on: windows-2019  # 使用 Windows 2019 runner 以确保与 Windows 7 兼容性
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-          architecture: 'x64'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pip-tools
-          pip-sync requirements.txt
-      - name: Run pyinstaller
-        run: |
-          python -m PyInstaller app.spec
-      - uses: actions/upload-artifact@v2
-        with:
-          name: app
-          path: dist/app
+    - name: Checkout code
+      uses: actions/checkout@v4
       
-      - name: create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.run_number }}
-          release_name: Release ${{ github.run_number }}
-          body: |
-            Test Release
-          draft: false
-          prerelease: false
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Download zbar
+      run: |
+        mkdir temp
+        cd temp
+        curl -L -o zbar.zip https://github.com/mchehab/zbar/releases/download/0.23.90/zbar-0.23.90-win64.zip
+        7z x zbar.zip
+        copy bin\libzbar64-0.dll ..\libzbar-0.dll
+        cd ..
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build EXE files
+      run: |
+        pyinstaller --onefile sender.py --add-binary "libzbar-0.dll;."
+        pyinstaller --onefile receiver.py --add-binary "libzbar-0.dll;."
+        
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/sender.exe
+          dist/receiver.exe
+        body: |
+          ### 系统要求
+          - Windows 7 或更高版本
+          - 如果运行时提示缺少 DLL，请安装 [Visual C++ Redistributable 2015-2022](https://aka.ms/vs/17/release/vc_redist.x64.exe)
           
-      # Since we have a directory, create a zip
-      - name: zip the artifect dir into a zip
-        run: |
-          powershell Compress-Archive D:\a\SWEN90013-Data-Platform-for-Biomaterial-Testing\SWEN90013-Data-Platform-for-Biomaterial-Testing\dist\app D:\a\SWEN90013-Data-Platform-for-Biomaterial-Testing\SWEN90013-Data-Platform-for-Biomaterial-Testing\dist\app.zip
-      
-      - name: Upload release asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-           upload_url: ${{ steps.create_release.outputs.upload_url }}
-           asset_path: dist/app.zip
-           asset_name: app.zip
-           asset_content_type: application/zip
+          ### 注意事项
+          1. 直接运行 exe 文件即可
+          2. 如果提示缺少 DLL，按照上述链接安装 Visual C++ Redistributable
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
