@@ -8,45 +8,21 @@ on:
 
 permissions:
   contents: write
+
 jobs:
   build:
-    runs-on: windows-2019  # 使用 Windows 2019 runner 以确保与 Windows 7 兼容性
+    runs-on: windows-2019
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取所有标签
       
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-        
-    # - name: Download and setup zbar
-    #   shell: powershell
-    #   run: |
-    #     # 创建临时目录
-    #     New-Item -ItemType Directory -Force -Path .\temp
-    #     Set-Location temp
-        
-    #     # 下载 zbar
-    #     Invoke-WebRequest -Uri "https://linuxtv.org/downloads/zbar/binaries/zbar-0.23.91-win_x86_64-DShow.zip" -OutFile "zbar.zip"
-        
-    #     # 解压并列出内容
-    #     Expand-Archive -Path zbar.zip -DestinationPath .
-        
-    #     # 查找 DLL 文件
-    #     $dllPath = Get-ChildItem -Recurse -Filter "libzbar64-0.dll" | Select-Object -First 1 -ExpandProperty FullName
-        
-    #     if ($dllPath) {
-    #         Write-Host "Found DLL at: $dllPath"
-    #         Copy-Item $dllPath -Destination ..\libzbar-0.dll
-    #     } else {
-    #         Write-Host "DLL not found. Listing directory content:"
-    #         Get-ChildItem -Recurse
-    #         exit 1
-    #     }
-        
-    #     Set-Location ..
         
     - name: Install dependencies
       run: |
@@ -56,25 +32,38 @@ jobs:
         
     - name: Build EXE files
       run: |
-        pyinstaller --onefile sender.py # --add-binary "libzbar-0.dll;."
-        pyinstaller --onefile receiver.py # --add-binary "libzbar-0.dll;."
+        pyinstaller --onefile sender.py
+        pyinstaller --onefile receiver.py
+        
+    - name: Get tag name
+      if: startsWith(github.ref, 'refs/tags/')
+      id: get_tag
+      run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         
     - name: Create Release
-      id: create_release
+      if: startsWith(github.ref, 'refs/tags/')  # 只在有标签时创建 release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ github.ref_name }}  # 使用触发构建的标签名
         files: |
           dist/sender.exe
           dist/receiver.exe
         body: |
           ### 系统要求
           - Windows 7 或更高版本
-          - 如果运行时提示缺少 DLL，请安装 [Visual C++ Redistributable 2015-2022](https://aka.ms/vs/17/release/vc_redist.x64.exe)
           
           ### 注意事项
-          1. 直接运行 exe 文件即可
-          2. 如果提示缺少 DLL，按照上述链接安装 Visual C++ Redistributable
+          直接运行 exe 文件即可
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload artifacts (for manual trigger)
+      if: github.event_name == 'workflow_dispatch'  # 只在手动触发时上传 artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: executables
+        path: |
+          dist/sender.exe
+          dist/receiver.exe
