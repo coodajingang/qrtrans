@@ -19,12 +19,14 @@
 ## 依赖组件
 
 主要依赖：
-PyQt6>=6.0.0
-opencv-python>=4.5.0
-numpy>=1.19.0
-pyautogui>=0.9.53
-pyzbar>=0.1.9
-pillow>=8.0.0
+numpy==2.2.1
+opencv_python==4.10.0.84
+Pillow==11.1.0
+PyAutoGUI==0.9.54
+PyQt6==6.8.0
+PyQt6_sip==13.9.1
+pyzbar==0.1.9
+qrcode==8.0
 
 ## 安装说明
 
@@ -44,7 +46,7 @@ pip install zbar-py
 ### 发送端 (gui.py)
 
 1. 运行发送端程序：
-
+python sender.py
 2. 通过菜单栏"文件->打开文件"选择要传输的文件
 3. 在"参数设置"中调整：
    - 帧率（1-100fps）
@@ -56,7 +58,7 @@ pip install zbar-py
 ### 接收端 (rece_gui.py)
 
 1. 运行接收端程序：
-
+python receiver.py
 2. 设置文件保存路径
 3. 设置总分段数（与发送端一致）
 4. 框选二维码区域（1-4个）

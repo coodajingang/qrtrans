@@ -75,12 +75,14 @@ class SelectionArea(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         # 设置半透明的黑色背景
-        mask_color = QColor(0, 0, 0, 100)
+        mask_color = QColor(0, 0, 0, 100)  # 背景遮罩颜色，最后一个参数是透明度(0-255)
         painter.fillRect(self.screen_rect, mask_color)
         
         if self.is_drawing and not self.selection_rect.isEmpty():
-            # 清除选区内的遮罩
-            painter.eraseRect(self.selection_rect)
+            # 创建一个半透明的选区遮罩颜色
+            selection_mask = QColor(255, 255, 255, 50)  # 选区遮罩颜色，透明度设为50
+            painter.fillRect(self.selection_rect, selection_mask)
+            
             # 绘制选区边框
             painter.setPen(QPen(Qt.GlobalColor.red, 2, Qt.PenStyle.SolidLine))
             painter.drawRect(self.selection_rect)
@@ -109,6 +111,7 @@ class SelectionArea(QWidget):
                   f"{self.selection_rect.width()}, {self.selection_rect.height()}")
             self.parent().set_selection(self.selection_rect, self.area_idx)  # 将选择的区域传递给父窗口
             self.close()
+            print("select area window close!")
 
     def keyPressEvent(self, event):
         # 按ESC键退出

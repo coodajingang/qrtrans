@@ -7,6 +7,7 @@ class RecognitionThread(QThread):
     # 定义信号
     data_recognized = pyqtSignal(int, bytes)  # (segment_index, data_content)
     error_occurred = pyqtSignal(str)  # error message
+    qrcode_count_signal = pyqtSignal(int) # qrcode_count
     
     def __init__(self, data_queue):
         super().__init__()
@@ -24,12 +25,16 @@ class RecognitionThread(QThread):
                 # 识别二维码
                 qr_data_list = recognize_qr_code(screenshot_np)
                 if qr_data_list:
+                    self.qrcode_count_signal.emit(len(qr_data_list))
                     for data in qr_data_list:
                         try:
                             index, data_content, is_valid = parse_qr_data(data)
                             if is_valid:
                                 self.data_recognized.emit(index, data_content)
+                            else: 
+                                self.error_occurred.emit("invaliad")
                         except ValueError as e:
+                            print(e)
                             self.error_occurred.emit(str(e))
                             
             except Exception as e:
