@@ -4,7 +4,10 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: windows-2019  # 使用 Windows 2019 runner 以确保与 Windows 7 兼容性
@@ -18,14 +21,32 @@ jobs:
       with:
         python-version: '3.12'
         
-    - name: Download zbar
+    - name: Download and setup zbar
+      shell: powershell
       run: |
-        mkdir temp
-        cd temp
-        curl -L -o zbar.zip https://github.com/mchehab/zbar/releases/download/0.23.90/zbar-0.23.90-win64.zip
-        7z x zbar.zip
-        copy bin\libzbar64-0.dll ..\libzbar-0.dll
-        cd ..
+        # 创建临时目录
+        New-Item -ItemType Directory -Force -Path .\temp
+        Set-Location temp
+        
+        # 下载 zbar
+        Invoke-WebRequest -Uri "https://github.com/mchehab/zbar/releases/download/0.23.90/zbar-0.23.90-win64.zip" -OutFile "zbar.zip"
+        
+        # 解压并列出内容
+        Expand-Archive -Path zbar.zip -DestinationPath .
+        
+        # 查找 DLL 文件
+        $dllPath = Get-ChildItem -Recurse -Filter "libzbar64-0.dll" | Select-Object -First 1 -ExpandProperty FullName
+        
+        if ($dllPath) {
+            Write-Host "Found DLL at: $dllPath"
+            Copy-Item $dllPath -Destination ..\libzbar-0.dll
+        } else {
+            Write-Host "DLL not found. Listing directory content:"
+            Get-ChildItem -Recurse
+            exit 1
+        }
+        
+        Set-Location ..
         
     - name: Install dependencies
       run: |
