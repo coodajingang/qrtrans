@@ -76,7 +76,14 @@ jobs:
             pathex=['.'],
             binaries=[('libiconv.dll', '.')],
             datas=[],
-            hiddenimports=['PIL', 'PIL._tkinter_finder'],
+            hiddenimports=[
+                'numpy',
+                'PIL',
+                'PIL._tkinter_finder',
+                'PyQt6',
+                'cv2',
+                'pyzbar'
+            ],
             hookspath=[],
             hooksconfig={},
             runtime_hooks=[],
@@ -109,6 +116,7 @@ jobs:
             target_arch=None,
             codesign_identity=None,
             entitlements_file=None,
+            append_pkg=True,
         )
         "@ | Out-File -Encoding UTF8 sender.spec
 
@@ -122,7 +130,14 @@ jobs:
             pathex=['.'],
             binaries=[('libiconv.dll', '.')],
             datas=[],
-            hiddenimports=['PIL', 'PIL._tkinter_finder'],
+            hiddenimports=[
+                'numpy',
+                'PIL',
+                'PIL._tkinter_finder',
+                'PyQt6',
+                'cv2',
+                'pyzbar'
+            ],
             hookspath=[],
             hooksconfig={},
             runtime_hooks=[],
@@ -155,13 +170,15 @@ jobs:
             target_arch=None,
             codesign_identity=None,
             entitlements_file=None,
+            append_pkg=True,
         )
         "@ | Out-File -Encoding UTF8 receiver.spec
         
     - name: Build EXE files
       run: |
-        pyinstaller sender.spec
-        pyinstaller receiver.spec
+        # 使用 --runtime-tmpdir 选项确保运行时文件正确打包
+        pyinstaller sender.spec --runtime-tmpdir "."
+        pyinstaller receiver.spec --runtime-tmpdir "."
         
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
