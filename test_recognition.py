@@ -1,8 +1,8 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QSpinBox
-from PyQt6.QtCore import QRect
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QSpinBox
+from PyQt5.QtCore import QRect
 from recognition_thread import RecognitionThread
-from PyQt6.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap
 
 class TestWindow(QMainWindow):
     def __init__(self):

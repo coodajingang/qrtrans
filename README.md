@@ -13,20 +13,24 @@
 
 ## 系统要求
 
-- Python 3.8+
+- Python 3.8 , (pyqt5 支持windows7上运行)
 - 操作系统：Windows/Linux/MacOS
 
 ## 依赖组件
 
 主要依赖：
-numpy==2.2.1
-opencv_python==4.10.0.84
-Pillow==11.1.0
-PyAutoGUI==0.9.54
-PyQt6==6.8.0
-PyQt6_sip==13.9.1
-pyzbar==0.1.9
-qrcode==8.0
+
+pip install pyqt5 pyzbar qrcode
+pip install pyautogui
+pip install opencv-python==4.5.5.64
+pip install pillow==9.3
+
+On macOS and Linux, you need to run python3:
+
+python3 -m pip install pyautogui
+If you are running El Capitan and have problems installing pyobjc try:
+
+MACOSX_DEPLOYMENT_TARGET=10.11 pip install pyobjc
 
 ## 安装说明
 

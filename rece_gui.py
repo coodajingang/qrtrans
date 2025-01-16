@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import QMainWindow, QFileDialog, QLineEdit, QDialog, QPushButton, QSpinBox, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout, QMessageBox
-from PyQt6.QtCore import QTimer, QRect, QPoint, Qt
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QLineEdit, QDialog, QPushButton, QSpinBox, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout, QMessageBox
+from PyQt5.QtCore import QTimer, QRect, QPoint, Qt
 from data_transfer import send_file
-from PyQt6.QtGui import QPixmap, QAction, QIcon, QPainter, QPen, QCursor,QImage
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen, QCursor, QImage
 import threading
 import cv2
 import numpy as np
@@ -10,9 +11,9 @@ import time
 import os
 from queue import Queue
 import pyautogui  # 用于截屏
-from PyQt6.QtWidgets import QWidget, QApplication
-from PyQt6.QtCore import Qt, QPoint, QRect, QSize
-from PyQt6.QtGui import QPainter, QPen, QColor
+from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtCore import Qt, QPoint, QRect, QSize
+from PyQt5.QtGui import QPainter, QPen, QColor
 from qr_recognizer import recognize_qr_code, parse_qr_data, recognize_qr_code_for_reader_param
 from selection import SelectionArea
 import zlib

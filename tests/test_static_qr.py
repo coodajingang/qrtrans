@@ -1,17 +1,17 @@
 import sys
 import os
-from PyQt6.QtWidgets import QApplication,QHBoxLayout,QSpinBox, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton
-from PyQt6.QtCore import Qt, QSize
+from PyQt5.QtWidgets import QApplication,QHBoxLayout,QSpinBox, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton
+from PyQt5.QtCore import Qt, QSize
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from selection import SelectionArea
 from qr_recognizer import parse_qr_data 
 import pyzbar.pyzbar as pyzbar
-from PyQt6.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap
 import cv2
 import numpy as np
 import pyautogui  # 用于截屏
 import time
-from PyQt6.QtCore import QTimer
+from PyQt5.QtCore import QTimer
 
 class TestStaticQRWindow(QMainWindow):
     def __init__(self):

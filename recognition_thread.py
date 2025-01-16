@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 import cv2
 from qr_recognizer import recognize_qr_code, parse_qr_data

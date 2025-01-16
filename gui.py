@@ -1,13 +1,14 @@
 # gui.py
-from PyQt6.QtWidgets import QMainWindow, QFileDialog,QDialog,QPushButton, QSpinBox, QLabel, QVBoxLayout,QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout
-from PyQt6.QtCore import QTimer
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QDialog, QPushButton, QSpinBox, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout
+from PyQt5.QtCore import QTimer
 from data_transfer import send_file, FileProcessThread
-from PyQt6.QtGui import QPixmap, QAction, QIcon
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtGui import QPixmap, QIcon
 from param_qr import format_transfer_params
 import os
 from qr_generator import generate_qr_code
-from PyQt6.QtCore import Qt
-from PIL.ImageQt import ImageQt
+from PyQt5.QtCore import Qt
+from PIL.ImageQt import toqimage
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -389,7 +390,7 @@ class MainWindow(QMainWindow):
         
         # 转换PIL Image为QPixmap
         qr_label = QLabel()
-        qr_pixmap = QPixmap.fromImage(ImageQt(param_qr))
+        qr_pixmap = QPixmap.fromImage(toqimage(param_qr))
         qr_label.setPixmap(qr_pixmap)
         qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         

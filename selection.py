@@ -1,14 +1,14 @@
-from PyQt6.QtWidgets import QMainWindow, QFileDialog, QLineEdit, QDialog, QPushButton, QSpinBox, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout, QMessageBox
-from PyQt6.QtCore import QTimer, QRect, QPoint, Qt
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QLineEdit, QDialog, QPushButton, QSpinBox, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QTabWidget, QTextEdit, QGridLayout, QMessageBox
+from PyQt5.QtCore import QTimer, QRect, QPoint, Qt
 from data_transfer import send_file
-from PyQt6.QtGui import QPixmap, QAction, QIcon, QPainter, QPen, QCursor,QImage
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen, QCursor, QImage
 import cv2
 import numpy as np
 import pyautogui
 import time
-from PyQt6.QtWidgets import QWidget, QApplication
-from PyQt6.QtCore import Qt, QPoint, QRect, QSize
-from PyQt6.QtGui import QPainter, QPen, QColor
+from PyQt5.QtWidgets import QWidget, QApplication, QAction
+from PyQt5.QtCore import Qt, QPoint, QRect, QSize
+from PyQt5.QtGui import QPainter, QPen, QColor
 
 
 class SelectionArea(QWidget):
@@ -18,12 +18,12 @@ class SelectionArea(QWidget):
         # 设置窗口标志
         #self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |  # 无边框
-            Qt.WindowType.WindowStaysOnTopHint |  # 窗口置顶
-            Qt.WindowType.Tool |                  # 工具窗口
-            Qt.WindowType.BypassWindowManagerHint # 绕过窗口管理器
+            Qt.FramelessWindowHint |  # 无边框
+            Qt.WindowStaysOnTopHint |  # 窗口置顶
+            Qt.Tool |                  # 工具窗口
+            Qt.BypassWindowManagerHint # 绕过窗口管理器
         )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_TranslucentBackground)
         
         # 初始化变量
         self.start_point = QPoint()
@@ -88,21 +88,21 @@ class SelectionArea(QWidget):
             painter.drawRect(self.selection_rect)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.start_point = event.position().toPoint()
+        if event.button() == Qt.LeftButton:
+            self.start_point = event.pos()
             self.is_drawing = True
             self.selection_rect = QRect()
             self.update()
 
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            self.end_point = event.position().toPoint()
+        if event.buttons() & Qt.LeftButton:
+            self.end_point = event.pos()
             self.selection_rect = QRect(self.start_point, self.end_point).normalized()
             self.update()
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.end_point = event.position().toPoint()
+        if event.button() == Qt.LeftButton:
+            self.end_point = event.pos()
             self.selection_rect = QRect(self.start_point, self.end_point).normalized()
             self.is_drawing = False
             self.update()
@@ -115,7 +115,7 @@ class SelectionArea(QWidget):
 
     def keyPressEvent(self, event):
         # 按ESC键退出
-        if event.key() == Qt.Key.Key_Escape:
+        if event.key() == Qt.Key_Escape:
             self.close()
 
 
@@ -134,21 +134,21 @@ class SelectionArea2(QWidget):
         painter.drawRect(self.rect)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.start_point = event.position().toPoint()
+        if event.button() == Qt.LeftButton:
+            self.start_point = event.pos()
             self.end_point = self.start_point
             self.rect = QRect(self.start_point, self.end_point)
             self.update()
 
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            self.end_point = event.position().toPoint()
+        if event.buttons() & Qt.LeftButton:
+            self.end_point = event.pos()
             self.rect = QRect(self.start_point, self.end_point).normalized()
             self.update()
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.end_point = event.position().toPoint()
+        if event.button() == Qt.LeftButton:
+            self.end_point = event.pos()
             self.rect = QRect(self.start_point, self.end_point).normalized()
             self.update()
             self.parent().set_selection(self.rect)  # 将选择的区域传递给父窗口

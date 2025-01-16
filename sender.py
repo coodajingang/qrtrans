@@ -1,6 +1,6 @@
 # main.py
 import sys
-from PyQt6.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 from gui import MainWindow
 
 if __name__ == "__main__":

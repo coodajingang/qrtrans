@@ -3,9 +3,9 @@ from file_handler import compress_file, split_data
 from qr_generator import generate_qr_code
 import zlib
 import base64
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import QThread, pyqtSignal
-from PIL.ImageQt import ImageQt
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QThread, pyqtSignal
+from PIL.ImageQt import toqimage
 import threading
 from queue import Queue
 import math
@@ -37,7 +37,7 @@ class QRCodeGeneratorThread(QThread):
             )
             
             # 生成二维码并放入结果队列
-            qr_code = QPixmap.fromImage(ImageQt(generate_qr_code(
+            qr_code = QPixmap.fromImage(toqimage(generate_qr_code(
                 base64.b64encode(formatted_chunk).decode('utf-8'),
                 self.width, 
                 self.height
