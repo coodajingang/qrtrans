@@ -17,53 +17,193 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # 获取所有标签
+        fetch-depth: 0
       
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
+          
+    - name: Download dependencies packages
+      run: |
+        mkdir python_packages
+        pip download -r requirements.txt -d python_packages
         
+    - name: Create offline install script
+      shell: powershell
+      run: |
+        @"
+        @echo off
+        echo Installing Python packages...
+        pip install --no-index --find-links python_packages -r requirements.txt
+        echo Installation complete!
+        pause
+        "@ | Out-File -Encoding ascii -FilePath "install_dependencies.bat"
+        
+    - name: Zip dependencies
+      run: |
+        7z a python_dependencies.zip python_packages requirements.txt install_dependencies.bat
+             
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
+
+    - name: Find DLL files
+      shell: powershell
+      run: |
+        # 找到 Python 安装目录中的 libiconv.dll
+        $pythonPath = (python -c "import sys; print(sys.prefix)")
+        $dllPath = Get-ChildItem -Path $pythonPath -Recurse -Filter "libiconv.dll" | Select-Object -First 1
+        if ($dllPath) {
+            Copy-Item $dllPath.FullName -Destination .
+            Write-Host "Found and copied libiconv.dll"
+        } else {
+            Write-Host "libiconv.dll not found"
+        }
+        
+    - name: Create PyInstaller Spec Files
+      shell: powershell
+      run: |
+        @"
+        # -*- mode: python ; coding: utf-8 -*-
+
+        block_cipher = None
+
+        a = Analysis(
+            ['sender.py'],
+            pathex=['.'],
+            binaries=[('libiconv.dll', '.')],
+            datas=[],
+            hiddenimports=['PIL', 'PIL._tkinter_finder'],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+        )
+
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='sender',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=True,
+            disable_windowed_traceback=False,
+            argv_emulation=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements_file=None,
+        )
+        "@ | Out-File -Encoding UTF8 sender.spec
+
+        @"
+        # -*- mode: python ; coding: utf-8 -*-
+
+        block_cipher = None
+
+        a = Analysis(
+            ['receiver.py'],
+            pathex=['.'],
+            binaries=[('libiconv.dll', '.')],
+            datas=[],
+            hiddenimports=['PIL', 'PIL._tkinter_finder'],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+        )
+
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='receiver',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=True,
+            disable_windowed_traceback=False,
+            argv_emulation=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements_file=None,
+        )
+        "@ | Out-File -Encoding UTF8 receiver.spec
         
     - name: Build EXE files
       run: |
-        pyinstaller --onefile sender.py
-        pyinstaller --onefile receiver.py
-        
-    - name: Get tag name
-      if: startsWith(github.ref, 'refs/tags/')
-      id: get_tag
-      run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        pyinstaller sender.spec
+        pyinstaller receiver.spec
         
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')  # 只在有标签时创建 release
+      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref_name }}  # 使用触发构建的标签名
+        tag_name: ${{ github.ref_name }}
         files: |
           dist/sender.exe
           dist/receiver.exe
+          python_dependencies.zip
         body: |
+          ### 发布内容
+          1. 可执行文件
+            - sender.exe
+            - receiver.exe
+          
+          2. Python 开发环境依赖包 (python_dependencies.zip)
+            - 解压后运行 install_dependencies.bat 安装所有依赖
+            - 需要已安装 Python 3.12
+          
           ### 系统要求
           - Windows 7 或更高版本
           
+          ### 离线安装 Python 依赖的步骤
+          1. 解压 python_dependencies.zip
+          2. 运行 install_dependencies.bat
+          3. 等待安装完成
+          
           ### 注意事项
-          直接运行 exe 文件即可
+          - exe 文件可直接运行（所有依赖已打包）
+          - 离线依赖安装需要 Python 3.12 环境
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Upload artifacts (for manual trigger)
-      if: github.event_name == 'workflow_dispatch'  # 只在手动触发时上传 artifacts
+      if: github.event_name == 'workflow_dispatch'
       uses: actions/upload-artifact@v3
       with:
         name: executables
         path: |
           dist/sender.exe
           dist/receiver.exe
+          python_dependencies.zip
