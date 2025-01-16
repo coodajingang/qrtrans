@@ -92,6 +92,7 @@ jobs:
             win_private_assemblies=False,
             cipher=block_cipher,
             noarchive=False,
+            collect_all=['numpy', 'PIL', 'PyQt6', 'cv2', 'pyzbar'] 
         )
 
         pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
@@ -109,13 +110,14 @@ jobs:
             strip=False,
             upx=True,
             upx_exclude=[],
-            runtime_tmpdir='.',
+            runtime_tmpdir=None,
             console=True,
             disable_windowed_traceback=False,
             argv_emulation=False,
             target_arch=None,
             codesign_identity=None,
             entitlements_file=None,
+            bundle_identifier=None,
             append_pkg=True,
         )
         "@ | Out-File -Encoding UTF8 sender.spec
@@ -146,6 +148,7 @@ jobs:
             win_private_assemblies=False,
             cipher=block_cipher,
             noarchive=False,
+            collect_all=['numpy', 'PIL', 'PyQt6', 'cv2', 'pyzbar'] 
         )
 
         pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
@@ -163,19 +166,45 @@ jobs:
             strip=False,
             upx=True,
             upx_exclude=[],
-            runtime_tmpdir='.',
+            runtime_tmpdir=None,
             console=True,
             disable_windowed_traceback=False,
             argv_emulation=False,
             target_arch=None,
             codesign_identity=None,
             entitlements_file=None,
+            bundle_identifier=None,
             append_pkg=True,
         )
         "@ | Out-File -Encoding UTF8 receiver.spec
+
+    - name: Find and Copy Python DLLs
+      shell: powershell
+      run: |
+        $pythonPath = (python -c "import sys; print(sys.prefix)")
+        # 复制 python dll
+        Copy-Item "$pythonPath\python312.dll" -Destination .
+        # 复制其他可能需要的 DLL
+        if (Test-Path "$pythonPath\DLLs") {
+            Copy-Item "$pythonPath\DLLs\*.dll" -Destination .
+        }
+
+    - name: Update spec files with Python DLL
+      shell: powershell
+      run: |
+        # 修改 spec 文件，在 binaries 中添加 Python DLL
+        $sender_spec = Get-Content sender.spec -Raw
+        $sender_spec = $sender_spec -replace "binaries=\[\('libiconv.dll', '\.\'\)\]", "binaries=[('libiconv.dll', '.'), ('python312.dll', '.')]"
+        $sender_spec | Set-Content sender.spec
         
+        $receiver_spec = Get-Content receiver.spec -Raw
+        $receiver_spec = $receiver_spec -replace "binaries=\[\('libiconv.dll', '\.\'\)\]", "binaries=[('libiconv.dll', '.'), ('python312.dll', '.')]"
+        $receiver_spec | Set-Content receiver.spec
+    
     - name: Build EXE files
       run: |
+        if exist "build" rd /s /q build
+        if exist "dist" rd /s /q dist
         pyinstaller sender.spec
         pyinstaller receiver.spec
         
@@ -187,7 +216,7 @@ jobs:
         files: |
           dist/sender.exe
           dist/receiver.exe
-          python_dependencies.zip
+          # python_dependencies.zip
         body: |
           ### 发布内容
           1. 可执行文件
@@ -213,7 +242,16 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+    - name: Debug Info
+      shell: powershell
+      run: |
+        Write-Host "Python Path:"
+        python -c "import sys; print(sys.prefix)"
+        Write-Host "DLL Files in current directory:"
+        Get-ChildItem -Filter *.dll
+        Write-Host "Python executable location:"
+        Get-Command python | Select-Object Source
+    
     - name: Upload artifacts (for manual trigger)
       if: github.event_name == 'workflow_dispatch'
       uses: actions/upload-artifact@v3
